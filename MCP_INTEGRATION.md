@@ -16,6 +16,6 @@
 
 `mcp-config.example.json`提供比赛要求的端点与凭证占位示例；程序本身不加载该配置文件，也不假定WorkBuddy会自动展开`${MCD_MCP_TOKEN}`。日常使用按README的凭证流程，不需要导入这个完整连接器配置。
 
-真实运行证据见[脱敏验证摘要](tests/live-validation.json)。2026-10-22验证了时间、积分、空券列表和商品列表；详情尚未使用真实商品验证，有券排序采用合成用例。真实401证据见[鉴权验证](tests/auth-failure-validation.json)。所有公开样例均来自[合成数据](examples/synthetic.json)，不包含实际账户权益。
+真实运行证据见[脱敏验证摘要](tests/live-validation.json)。2026-10-22验证了时间、积分、空券列表和商品列表；2026-10-23补齐真实商品详情与引导查询链，见[核心实测](tests/core-live-validation.json)；有券排序采用合成用例。真实401证据见[鉴权验证](tests/auth-failure-validation.json)。所有公开样例均来自[合成数据](examples/synthetic.json)，不包含实际账户权益。
 
 来源：[官方文档](https://open.mcd.cn/mcp/doc)、[官方Server介绍](https://github.com/M-China/mcd-mcp-server)。

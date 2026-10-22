@@ -108,7 +108,7 @@ class McdClient:
         return message["result"]
 
     def initialize(self):
-        result = self._rpc("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "mcd-rights-readonly", "version": "0.1.1"}})
+        result = self._rpc("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "mcd-rights-readonly", "version": "0.2.0"}})
         if not isinstance(result, dict):
             raise McdError("MCP初始化响应结构不完整。")
         self._headers["MCP-Protocol-Version"] = result.get("protocolVersion", "2024-11-05")

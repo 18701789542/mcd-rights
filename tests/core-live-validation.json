@@ -1,0 +1,64 @@
+{
+  "version": "0.2.0",
+  "test_kind": "live guided CLI integration; development inputs, not user consumption preferences",
+  "queried_at": "2026-10-23T00:30:07.821000+08:00",
+  "exit_code": 0,
+  "selected_from_fresh_catalog": 17081,
+  "tools_called": [
+    {
+      "tool": "now-time-info",
+      "selected_spu": null
+    },
+    {
+      "tool": "query-my-account",
+      "selected_spu": null
+    },
+    {
+      "tool": "query-my-coupons",
+      "selected_spu": null
+    },
+    {
+      "tool": "mall-points-products",
+      "selected_spu": null
+    },
+    {
+      "tool": "now-time-info",
+      "selected_spu": null
+    },
+    {
+      "tool": "query-my-account",
+      "selected_spu": null
+    },
+    {
+      "tool": "query-my-coupons",
+      "selected_spu": null
+    },
+    {
+      "tool": "mall-points-products",
+      "selected_spu": null
+    },
+    {
+      "tool": "mall-product-detail",
+      "selected_spu": 17081
+    }
+  ],
+  "all_five_read_only_tools_exercised": true,
+  "sections": {
+    "points": "ok",
+    "coupons": "empty",
+    "catalog": "ok",
+    "detail": "ok"
+  },
+  "sku_count": 1,
+  "sku_checks": [
+    {
+      "sku_id": 17787,
+      "total_cash": "21.9",
+      "cash_budget_status": "超过总现金预算",
+      "can_consider": false
+    }
+  ],
+  "note_display_preserved_as_text": true,
+  "personal_balances_or_coupon_identifiers_saved": false,
+  "no_transaction_tools": true
+}

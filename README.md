@@ -2,14 +2,14 @@
 
 把麦当劳积分、账户券和兑换成本整理成最多三条有依据的关注项。近期不消费时，直接给出“无需为了权益额外花钱”。
 
-这是麦当劳程序员节创意开发大赛的非官方作品，当前版本 **0.1.1**。适合想知道“我有哪些权益、哪些值得先看”的普通用户。Python 3.10+，仅标准库，无需安装依赖。
+这是麦当劳程序员节创意开发大赛的非官方作品，当前版本 **0.2.0**。适合想知道“我有哪些权益、哪些值得先看”的普通用户。Python 3.10+，仅标准库，无需安装依赖。
 
 ## 一分钟体验
 
 在本目录打开终端：
 
 ```powershell
-python -B -X utf8 scripts/mcd_rights.py --demo
+python -B -X utf8 scripts/mcd_rights.py --demo --interactive
 python -B -X utf8 scripts/mcd_rights.py --demo --catalog --product-id 103 --cash-budget 0
 python -B -X utf8 scripts/mcd_rights.py --demo --plan no
 ```
@@ -22,7 +22,7 @@ python -B -X utf8 scripts/mcd_rights.py --demo --plan no
 
 ```powershell
 python -B -X utf8 scripts/mcd_rights.py --set-token
-python -B -X utf8 scripts/mcd_rights.py --live
+python -B -X utf8 scripts/mcd_rights.py --live --interactive
 python -B -X utf8 scripts/mcd_rights.py --live --focus points --plan no
 python -B -X utf8 scripts/mcd_rights.py --live --catalog --plan yes --visit-date 2026-10-25
 ```
@@ -59,12 +59,14 @@ python -B -X utf8 scripts/mcd_rights.py --live --catalog --plan yes --visit-date
 python -B -X utf8 -m unittest discover -s tests -v
 ```
 
-2026-10-22：33项自动测试通过；真实积分、空券列表、商品列表查询通过，9项候选、15项因冲突或不足被排除；真实无效Token返回401。测试摘要见[实时验证](tests/live-validation.json)与[鉴权失败验证](tests/auth-failure-validation.json)，不含账户积分数、券码或凭证。真实账户当时没有券，因此有券排序只通过合成用例验证；所选商品详情也仅通过合成数据验证。
+验证截至2026-10-23：48项自动测试通过；真实积分、空券列表、商品列表查询通过，9项候选、15项因冲突或不足被排除；真实无效Token返回401。测试摘要见[实时验证](tests/live-validation.json)与[鉴权失败验证](tests/auth-failure-validation.json)，不含账户积分数、券码或凭证。真实账户当时没有券，因此有券排序只通过合成用例验证；2026-10-23已补齐真实商品详情和完整引导查询验证。
 
 客户端在发出请求前限制为5个只读工具，拒绝领券、兑换、订单、抽奖。券每页最多200条、最多5页，重复、页数变化或中途失败均报告覆盖不全；不重试网络失败，不用缓存冒充实时结果。工具、协议和字段见[MCP接入说明](MCP_INTEGRATION.md)。
 
-WorkBuddy已真实参与方案与规则评审，实际任务、用量、失败和采纳情况见[开发记录](workbuddy.md)。不能据此推定赛事联动奖励资格。仓库包含未改动的官方[参赛声明](CONTEST_DECLARATION.md)，公开提交前需参赛者本人审阅。当前未公开仓库、未报名。
+WorkBuddy已真实参与方案与规则评审，实际任务、用量、失败和采纳情况见[开发记录](workbuddy.md)。不能据此推定赛事联动奖励资格。仓库包含未改动的官方[参赛声明](CONTEST_DECLARATION.md)，公开提交前需参赛者本人审阅。项目仓库：https://github.com/18701789542/mcd-rights 。尚未报名。
 
-修复内容见[版本记录](CHANGELOG.md)。0.1.1修正业务成功标记与错误码冲突、跨时区券排序，以及损坏响应的错误处理。
+修复内容见[版本记录](CHANGELOG.md)。0.2.0修正业务成功标记与错误码冲突、跨时区券排序，以及损坏响应的错误处理。
 
-自编代码的拟议开源许可为[MIT](LICENSE)，对外发布前由参赛者确认；官方参赛声明模板保持原文，不纳入自编代码许可。
+自编代码采用[MIT](LICENSE)许可；官方参赛声明模板保持原文，不纳入自编代码许可。
+
+0.2.0核心流程：一条引导命令完成消费计划、权益查询、商品选择与SKU判断；同时比较积分余额和两阶段总现金。真实商品详情与引导流程已验证，见[核心实测](tests/core-live-validation.json)。开发验收输入不是用户的真实消费偏好。

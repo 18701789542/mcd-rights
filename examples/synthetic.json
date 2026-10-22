@@ -11,7 +11,7 @@
       {"spuId": 101, "spuName": "合成冲突商品", "point": "200", "price": "0", "status": 2, "upTime": "2026-01-01 00:00:00", "downTime": "2026-03-01 23:59:59"},
       {"spuId": 103, "spuName": "合成饮品兑换券", "point": "500", "price": "0", "status": 2, "upTime": "2026-10-01 00:00:00", "downTime": "2026-12-01 23:59:59"}
     ]},
-    "detail": {"status": "ok", "data": {"spuId": 103, "spuName": "合成饮品兑换券", "note": "这是合成购买须知：兑换后使用仍需额外支付7元，不是真实商品。", "skuList": [
+    "detail": {"status": "ok", "data": {"spuId": 103, "spuName": "合成饮品兑换券", "upTime": "2026-10-01 00:00:00", "downTime": "2026-12-01 23:59:59", "note": "这是合成购买须知：兑换后使用仍需额外支付7元，不是真实商品。", "skuList": [
       {"skuId": 1003, "points": "500", "price": "0", "extTradePrice": "7"},
       {"skuId": 1004, "points": "800", "price": "0", "extTradePrice": null}
     ]}}

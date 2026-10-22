@@ -62,6 +62,35 @@ def coupon_deadline_key(coupon):
         return (1, "", "")
 
 
+def assess_sku(sku, available, budget, window_valid, plan):
+    """Compare returned balances/costs; this is never a transaction eligibility check."""
+    points, exchange, use = (number(sku.get(k)) for k in ("points", "price", "extTradePrice"))
+    total = exchange + use if exchange is not None and use is not None else None
+    enough = None if points is None or available is None else available >= points
+    gap = max(points - available, Decimal(0)) if enough is not None else None
+    valid_id = type(sku.get("skuId")) is int and sku["skuId"] > 0
+    budget_status = "未设置预算" if budget is None else "成本待核实" if total is None else "在总现金预算内（仍需官方核验）" if total <= budget else "超过总现金预算"
+    points_status = "积分信息不足" if enough is None else "当前积分足够" if enough else f"当前积分不足，还差{numeric_text(gap)}积分"
+    can_consider = valid_id and enough is True and total is not None and budget is not None and total <= budget and window_valid and plan == "yes"
+    if plan == "no":
+        decision = "近期不消费，无需为权益兑换。"
+    elif enough is False:
+        decision = points_status + "，本次不列为候选。"
+    elif budget is not None and total is not None and total > budget:
+        decision = "超过总现金预算，本次不列为候选。"
+    elif enough is None or total is None:
+        decision = "积分或完整现金成本不足，暂不能判断。"
+    elif not valid_id:
+        decision = "SKU标识缺失或异常，无法列为可选择的候选。"
+    elif not window_valid:
+        decision = "商品状态或展示时间未确认，暂不能列为候选。"
+    elif plan != "yes":
+        decision = "先确认是否计划消费，再决定是否考虑兑换。"
+    elif budget is None:
+        decision = "当前积分足够；请先确定总现金预算。"
+    else:
+        decision = "积分足够且在总现金预算内；库存、资格与券适用性仍需官方核验。"
+    return {"sku_id": sku.get("skuId"), "points": numeric_text(points), "exchange_cash": numeric_text(exchange), "use_cash": numeric_text(use), "total_cash": numeric_text(total), "points_gap": numeric_text(gap), "points_status": points_status, "budget_status": budget_status, "can_consider": can_consider, "decision": decision}
 def fetch_coupons(call):
     coupons, identities, reasons, total = [], set(), [], None
     pages, expected_last = 0, None
@@ -148,7 +177,7 @@ def collect(client, focus="both", catalog=False, product_id=None):
                     sections["detail"] = {"status": "error", "error": "该商品不在本轮商品券列表中；未请求详情。"}
                 else:
                     detail = client.call("mall-product-detail", {"spuId": product_id})
-                    if not isinstance(detail, dict) or not isinstance(detail.get("skuList"), list):
+                    if not isinstance(detail, dict) or detail.get("spuId") != product_id or not isinstance(detail.get("skuList"), list):
                         raise ValueError()
                     sections["detail"] = {"status": "ok", "data": {k: detail.get(k) for k in ("spuId", "spuName", "note", "upTime", "downTime", "skuList")}}
         except Exception:
@@ -165,7 +194,7 @@ def analyze(snapshot, plan="unknown", visit_date=None, budget=None):
         now = now.astimezone(TZ)
     visit = date.fromisoformat(visit_date) if visit_date else None
     budget_value = number(budget)
-    report = {"version": "0.1.1", "queried_at": now.isoformat(), "time_source": snapshot.get("time_source", "未说明"), "plan": plan, "visit_date": visit_date, "cash_budget": numeric_text(budget), "sections": {}, "attention": [], "uncertainties": []}
+    report = {"version": "0.2.0", "queried_at": now.isoformat(), "time_source": snapshot.get("time_source", "未说明"), "plan": plan, "visit_date": visit_date, "cash_budget": numeric_text(budget), "sections": {}, "attention": [], "uncertainties": []}
     attention = report["attention"]
     for name, section in snapshot["sections"].items():
         if section["status"] in ("error", "not_requested"):
@@ -189,14 +218,22 @@ def analyze(snapshot, plan="unknown", visit_date=None, budget=None):
                 timing, start = temporal(c.get("tradeEndDate"), now, True), temporal(c.get("tradeStartDate"), now)
                 flag = "已过展示截止" if timing == "past" else "待核实" if timing in ("unknown", "boundary", "today") or start in ("unknown", "future", "boundary", "today") or c.get("enable") != 1 else "仅确认账户持有"
                 title = str(c.get("title") or "未命名券")
-                item = {"title": title, "start": c.get("tradeStartDate"), "end": c.get("tradeEndDate"), "timing": timing, "flag": flag, "order_usable": "未核验"}
+                visit_fit = "未提供计划日期"
+                if visit and start != "unknown" and timing != "unknown":
+                    dates = []
+                    for field in ("tradeStartDate", "tradeEndDate"):
+                        parsed = datetime.fromisoformat(c[field].replace("Z", "+00:00"))
+                        parsed = parsed.replace(tzinfo=TZ) if parsed.tzinfo is None else parsed.astimezone(TZ)
+                        dates.append(parsed.date())
+                    visit_fit = "计划日期尚未生效" if visit < dates[0] else "计划日期已过展示截止" if visit > dates[1] else "计划当日时段需核实" if visit in dates else "计划日期在展示范围内，订单适用性未核验"
+                item = {"title": title, "start": c.get("tradeStartDate"), "end": c.get("tradeEndDate"), "timing": timing, "flag": flag, "visit_fit": visit_fit, "order_usable": "未核验"}
                 items.append(item)
-                if flag == "仅确认账户持有":
+                if flag == "仅确认账户持有" and visit_fit not in ("计划日期尚未生效", "计划日期已过展示截止"):
                     end_dt = datetime.fromisoformat(c["tradeEndDate"].replace("Z", "+00:00"))
                     end_dt = end_dt.replace(tzinfo=TZ) if end_dt.tzinfo is None else end_dt.astimezone(TZ)
                     deadline = end_dt.date()
                     urgent = visit is not None and deadline <= visit
-                    attention.append({"kind": "coupon", "title": title, "reason": f"展示结束时间：{c['tradeEndDate']}；门店与订单可用性未核验。", "priority": "先关注" if urgent else "可以稍后看", "sort_date": end_dt.isoformat(), "evidence": {"tool": "query-my-coupons", "field": "tradeEndDate"}})
+                    attention.append({"kind": "coupon", "title": title, "reason": f"展示结束时间：{c['tradeEndDate']}；{visit_fit}；门店与订单可用性未核验。", "priority": "先关注" if urgent else "可以稍后看", "sort_date": end_dt.isoformat(), "evidence": {"tool": "query-my-coupons", "field": "tradeEndDate"}})
             items.sort(key=coupon_deadline_key)
             report["sections"][name] = {"status": section["status"], "read_count": section.get("read_count", len(items)), "total": section.get("total"), "pages": section.get("pages"), "items": items, "limitations": section.get("limitations", [])}
             if section["status"] == "partial":
@@ -214,15 +251,19 @@ def analyze(snapshot, plan="unknown", visit_date=None, budget=None):
             report["sections"][name] = {"status": section["status"], "candidate_count": len(candidates), "items": candidates, "excluded_count": len(conflicts), "excluded": conflicts}
         elif name == "detail":
             data, skus = section.get("data", {}), []
+            account = snapshot["sections"].get("points", {})
+            available = number(account.get("data", {}).get("availablePoint")) if account.get("status") == "ok" else None
+            listing = next((p for p in snapshot["sections"].get("catalog", {}).get("data", []) if p.get("spuId") == data.get("spuId")), {})
+            start, end = temporal(data.get("upTime"), now), temporal(data.get("downTime"), now, True)
+            window_valid = (listing.get("status") == 2 and temporal(listing.get("upTime"), now) == "past" and temporal(listing.get("downTime"), now, True) == "future" and start == "past" and end == "future" and all(len(str(v)) > 10 for v in [listing.get("upTime"), listing.get("downTime"), data.get("upTime"), data.get("downTime")]))
             for sku in data.get("skuList", []):
                 if not isinstance(sku, dict):
                     continue
-                points, exchange, use = number(sku.get("points")), number(sku.get("price")), number(sku.get("extTradePrice"))
-                condition = "未设置预算" if budget_value is None else "成本待核实" if exchange is None or use is None else "在总现金预算内（仍需官方核验）" if exchange + use <= budget_value else "超过总现金预算"
-                skus.append({"sku_id": sku.get("skuId"), "points": numeric_text(points), "exchange_cash": numeric_text(exchange), "use_cash": numeric_text(use), "budget_status": condition})
-            start, end = temporal(data.get("upTime"), now), temporal(data.get("downTime"), now, True)
-            window = "展示时间窗口内，交易资格仍未核验" if start == "past" and end == "future" else "时间窗口异常或不足，请核实后再考虑兑换"
+                skus.append(assess_sku(sku, available, budget_value, window_valid, plan))
+            window = "列表与详情均在展示窗口内，交易资格仍未核验" if window_valid else "状态或时间窗口异常／不足，请核实后再考虑兑换"
             report["sections"][name] = {"status": "ok", "title": str(data.get("spuName") or "未命名商品"), "note": data.get("note"), "skus": skus, "time_window": window, "transaction_validated": False}
+            if not skus:
+                report["uncertainties"].append("该商品没有返回可判断的SKU，不推荐兑换。")
     order = {"先关注": 0, "可以稍后看": 1}
     attention.sort(key=lambda a: (order.get(a["priority"], 2), a["kind"], a.get("sort_date", "")))
     report["attention"] = [] if plan == "no" else attention[:3]
@@ -253,7 +294,7 @@ def markdown(report, demo=False):
         elif key == "coupons":
             lines += [f"本次读到 {s['read_count']} 张；服务端总数 {plain(s['total'])}。门店／订单适用性未核验。", ""]
             for c in s["items"][:10]:
-                lines.append(f"- {plain(c['title'])}：{plain(c['end'])}；{c['flag']}")
+                lines.append(f"- {plain(c['title'])}：{plain(c['end'])}；{c['flag']}；{c['visit_fit']}")
             if len(s["items"]) > 10:
                 lines.append("更多券请使用JSON输出查看，本段只展示前10条。")
             lines.append("")
@@ -267,7 +308,7 @@ def markdown(report, demo=False):
         elif key == "detail":
             lines += [plain(s["title"]), "", plain(s["time_window"]), ""]
             for sku in s["skus"]:
-                lines.append(f"- SKU {plain(sku['sku_id'])}：{plain(sku['points'])}积分；兑换现金{plain(sku['exchange_cash'])}元；用券额外现金{plain(sku['use_cash'])}元；{sku['budget_status']}。")
+                lines.append(f"- SKU {plain(sku['sku_id'])}：{plain(sku['points'])}积分；兑换现金{plain(sku['exchange_cash'])}元；用券额外现金{plain(sku['use_cash'])}元；总现金{plain(sku['total_cash'])}元。{plain(sku['points_status'])}，{sku['budget_status']}。{plain(sku['decision'])}")
             lines += ["购买须知（服务原文，按文本展示）：", "", plain(s.get("note")), ""]
     lines += ["## 本次关注项", ""]
     for a in report["attention"]:

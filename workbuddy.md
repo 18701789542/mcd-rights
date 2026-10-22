@@ -173,3 +173,48 @@ Codex已实现Python标准库客户端、确定性规则、CLI与Skill指令，�
 新一轮连接检查：本机WorkBuddy 5.8.3运行中，IPC连接与版本匹配；实时模型目录GET仍报E_UPSTREAM、network_fetch_failed，桥接内读取2次后失败。本轮未派发新模型任务，无新task_id、usage或credit。没有使用旧倍率继续推理，也没有激活桌面或放宽后台权限。
 
 Codex独立审查修复了success与code矛盾、跨时区券概览排序、损坏SSE与文本块错误处理，以及非对象参数误放行。新增6项回归，总计33项测试通过。这些修复不是WorkBuddy给出的意见，不计作新增WorkBuddy成功开发记录。桌面识别与自然语言触发仍未完成。
+
+
+## 2026-10-23代理修复后的真实Read验收
+
+用户确认重启后，WorkBuddy已跟随现有系统代理，模型目录恢复HTTP 200；后台目录与只读委派已恢复，桌面Skill触发未验收。此任务为恢复检查，不冒称新的代码审阅或脚本执行。原参赛ZIP保持此前固定版本。
+
+### 实际输入
+
+这是代理修复后的真实Read验收。请只用Read读取绝对路径 <本地比赛目录>/作品/mcd-rights/CHANGELOG.md 。返回该文件0.1.1小节第一条修复内容，以及文件写明的自动测试总数，最多120个汉字。不要执行命令、不读其他文件、不猜测结果。只给最终答案。
+
+### 实际最终回答
+
+0.1.1 第一条修复：修正业务响应矛盾判断——`success=true`但`code=500`不再当成功，避免错误权益数据进入分析。文件写明自动测试总计 **33项**。
+
+### 真实用量
+
+```json
+{
+  "task_id": "wb-bcf38df2-9427-4e7c-8d3c-bdb7e0299f56",
+  "status": "complete",
+  "model": "hy3",
+  "rates_checked_at": "2026-10-22T16:01:30.121Z",
+  "usage": {
+    "input_tokens": 13215,
+    "output_tokens": 178,
+    "cache_creation_input_tokens": 13215,
+    "cache_read_input_tokens": 0,
+    "cache_creation": null,
+    "server_tool_use": null,
+    "service_tier": null
+  },
+  "credits": 0,
+  "model_requests": 2,
+  "tool_calls": [
+    "Read"
+  ]
+}
+```
+
+
+## 2026-10-23核心功能代码审阅失败
+
+实际任务：只Read作品scripts/rights.py，检查assess_sku和detail分支是否会把积分不足、两阶段现金、未知数据或冲突时间误列为候选；要求最多2个实质缺陷或未发现，不超过250字。
+
+实际task_id：wb-43440563-902f-4212-b082-14efc38c14c5；模型deepseek-v4.1-flash；状态failed；工具返回response exceeds inline limit of 655360 bytes，phase=cli_output。本地task.json的usage、credits和model_requests均未返回，保持未知。没有取得最终意见、没有重试，也没有把失败审阅当作已通过。Codex继续以真实MCP核心流程和48项自动测试验收，此轮未扩改WorkBuddy桥接。
