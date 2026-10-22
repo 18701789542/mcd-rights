@@ -1,0 +1,30 @@
+{
+  "validation": "live, not synthetic",
+  "queried_at": "2026-10-22T22:16:21.159000+08:00",
+  "encrypted_token_roundtrip": true,
+  "tools_called": [
+    "now-time-info",
+    "query-my-account",
+    "query-my-coupons",
+    "mall-points-products"
+  ],
+  "sections": {
+    "points": {
+      "status": "ok"
+    },
+    "coupons": {
+      "status": "empty"
+    },
+    "catalog": {
+      "status": "ok"
+    },
+    "detail": {
+      "status": "not_requested"
+    }
+  },
+  "coupons_read_count": 0,
+  "catalog_candidate_count": 9,
+  "catalog_excluded_count": 15,
+  "account_values_and_coupon_identifiers_saved": false,
+  "detail_not_requested": true
+}

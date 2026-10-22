@@ -1,0 +1,19 @@
+{
+  "queried_at": "2026-10-22T20:35:00+08:00",
+  "time_source": "合成示例时间，不是当前服务时间",
+  "sections": {
+    "points": {"status": "ok", "data": {"availablePoint": "1800", "currentMouthExpirePoint": "500", "nextMouthExpirePoint": "200"}},
+    "coupons": {"status": "ok", "data": [
+      {"title": "合成小食券", "tradeStartDate": "2026-10-01 00:00:00", "tradeEndDate": "2026-10-25 23:59:59", "enable": 1},
+      {"title": "缺少日期的合成券", "tradeStartDate": null, "tradeEndDate": null, "enable": 1}
+    ], "total": 2, "read_count": 2, "pages": 1, "limitations": []},
+    "catalog": {"status": "ok", "data": [
+      {"spuId": 101, "spuName": "合成冲突商品", "point": "200", "price": "0", "status": 2, "upTime": "2026-01-01 00:00:00", "downTime": "2026-03-01 23:59:59"},
+      {"spuId": 103, "spuName": "合成饮品兑换券", "point": "500", "price": "0", "status": 2, "upTime": "2026-10-01 00:00:00", "downTime": "2026-12-01 23:59:59"}
+    ]},
+    "detail": {"status": "ok", "data": {"spuId": 103, "spuName": "合成饮品兑换券", "note": "这是合成购买须知：兑换后使用仍需额外支付7元，不是真实商品。", "skuList": [
+      {"skuId": 1003, "points": "500", "price": "0", "extTradePrice": "7"},
+      {"skuId": 1004, "points": "800", "price": "0", "extTradePrice": null}
+    ]}}
+  }
+}
