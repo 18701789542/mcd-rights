@@ -2,7 +2,7 @@
 
 把麦当劳积分、账户券和兑换成本整理成最多三条有依据的关注项。近期不消费时，直接给出“无需为了权益额外花钱”。
 
-这是麦当劳程序员节创意开发大赛的非官方作品，当前版本 **0.2.0**。适合想知道“我有哪些权益、哪些值得先看”的普通用户。Python 3.10+，仅标准库，无需安装依赖。
+这是麦当劳程序员节创意开发大赛的非官方作品，当前版本 **0.2.1**。适合想知道“我有哪些权益、哪些值得先看”的普通用户。Python 3.10+，仅标准库，无需安装依赖。
 
 ## 一分钟体验
 
@@ -27,7 +27,9 @@ python -B -X utf8 scripts/mcd_rights.py --live --focus points --plan no
 python -B -X utf8 scripts/mcd_rights.py --live --catalog --plan yes --visit-date 2026-10-25
 ```
 
-最后一条的日期换成自己的计划。macOS/Linux通过当前进程的`MCD_MCP_TOKEN`环境变量提供Token；Windows也支持该方式，优先于DPAPI。不要把真实Token放入仓库或命令参数。
+最后一条的日期换成自己的计划。macOS/Linux通过当前进程的`MCD_MCP_TOKEN`环境变量提供Token；Windows也支持该方式。不要把真实Token放入仓库或命令参数。
+
+Windows也可在`--set-token`或`--live`时追加`--token-file "<私有目录下token.dpapi的绝对路径>"`，选择自定义加密凭证文件。显式文件优先于环境变量，读取失败不回退；未指定时依次使用环境变量、默认DPAPI文件。已有凭证经本人授权迁移时，移动原加密文件即可，无需重新输入Token。私有目录应在公开仓库和技能包之外；后续每次实时查询都需指定新路径。
 
 默认查询时间、积分、账户券。只有加`--catalog`才查商品券列表。用户选定列表中的商品ID后，再用`--product-id ID --cash-budget 金额`查该商品的SKU成本。每次先刷新商品列表，未找到ID则拒绝查询详情。`--format json`可查看完整字段依据。
 
@@ -43,7 +45,9 @@ python -B -X utf8 scripts/mcd_rights.py --live --catalog --plan yes --visit-date
 
 > 使用mcd-rights，只查我的积分；我最近不打算消费。
 
-本技能经Python客户端直连官方MCP，不要求把完整麦当劳连接器开放给Agent。宿主需要能执行Python脚本。后台WorkBuddy桥接只支持推理和Read，不具备执行脚本的权限，因此后台评审、Python运行与桌面宿主验收分别记录；当前未完成桌面导入和自然语言触发验收。
+本技能经Python客户端直连官方MCP，不要求把完整麦当劳连接器开放给Agent。宿主需要能执行Python脚本。后台WorkBuddy桥接只支持推理和Read，不具备执行脚本的权限，因此后台评审、Python运行与桌面宿主验收分别记录。
+
+2026-10-23真实桌面新任务已通过自然语言识别并加载已安装技能，实际执行了`--live --focus points --plan no`。原凭证路径在普通本机进程中存在，在WorkBuddy执行环境中返回不存在，查询退出1，未发起账户请求。用户已将精确文件的读取规则设为允许，旧会话复测仍失败，具体隔离原因尚未确认。随后按用户明确要求迁移原DPAPI文件，保持密文不变，新路径本机真实积分查询成功；桌面控制工具当前不可用，迁移后的WorkBuddy三场景尚待验收，见[桌面验收](tests/desktop-validation.json)。不要据此重复配置Token或把失败解释为积分为0。WorkBuddy权限与安全中心的说明见[官方文档](https://www.workbuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Permission-Modes)。
 
 ## 怎样判断“先用谁”
 
@@ -59,7 +63,7 @@ python -B -X utf8 scripts/mcd_rights.py --live --catalog --plan yes --visit-date
 python -B -X utf8 -m unittest discover -s tests -v
 ```
 
-验证截至2026-10-23：48项自动测试通过；真实积分、空券列表、商品列表查询通过，9项候选、15项因冲突或不足被排除；真实无效Token返回401。测试摘要见[实时验证](tests/live-validation.json)与[鉴权失败验证](tests/auth-failure-validation.json)，不含账户积分数、券码或凭证。真实账户当时没有券，因此有券排序只通过合成用例验证；2026-10-23已补齐真实商品详情和完整引导查询验证。
+验证截至2026-10-23：58项自动测试通过；真实积分、空券列表、商品列表查询通过，9项候选、15项因冲突或不足被排除；真实无效Token返回401。测试摘要见[实时验证](tests/live-validation.json)与[鉴权失败验证](tests/auth-failure-validation.json)，不含账户积分数、券码或凭证。真实账户当时没有券，因此有券排序只通过合成用例验证；2026-10-23已补齐真实商品详情和完整引导查询验证。
 
 客户端在发出请求前限制为5个只读工具，拒绝领券、兑换、订单、抽奖。券每页最多200条、最多5页，重复、页数变化或中途失败均报告覆盖不全；不重试网络失败，不用缓存冒充实时结果。工具、协议和字段见[MCP接入说明](MCP_INTEGRATION.md)。
 

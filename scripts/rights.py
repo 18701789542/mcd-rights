@@ -194,7 +194,7 @@ def analyze(snapshot, plan="unknown", visit_date=None, budget=None):
         now = now.astimezone(TZ)
     visit = date.fromisoformat(visit_date) if visit_date else None
     budget_value = number(budget)
-    report = {"version": "0.2.0", "queried_at": now.isoformat(), "time_source": snapshot.get("time_source", "未说明"), "plan": plan, "visit_date": visit_date, "cash_budget": numeric_text(budget), "sections": {}, "attention": [], "uncertainties": []}
+    report = {"version": "0.2.1", "queried_at": now.isoformat(), "time_source": snapshot.get("time_source", "未说明"), "plan": plan, "visit_date": visit_date, "cash_budget": numeric_text(budget), "sections": {}, "attention": [], "uncertainties": []}
     attention = report["attention"]
     for name, section in snapshot["sections"].items():
         if section["status"] in ("error", "not_requested"):

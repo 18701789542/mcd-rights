@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-23",
+  "version": "0.2.1",
+  "status": "partial",
+  "desktop_session_id": "dc973315-b583-4c08-8d6d-f208b92f72a0",
+  "desktop_task_title": "查询麦麦权益真实积分",
+  "workbuddy_version": "5.8.3",
+  "models_used": [
+    "Step-5-Preview",
+    "Hy3",
+    "Deepseek-V4-Pro"
+  ],
+  "usage": null,
+  "credits": null,
+  "skill_natural_language_loaded": true,
+  "python_executed": true,
+  "scenario_1": {
+    "request": "只查真实积分，近期不消费，不查券和商品，不执行交易，不写文件",
+    "arguments": [
+      "--live",
+      "--focus",
+      "points",
+      "--plan",
+      "no"
+    ],
+    "exit_code": 1,
+    "result": "credential_not_visible_in_host",
+    "account_network_requests": 0
+  },
+  "diagnostic": {
+    "same_python_binary": true,
+    "same_LOCALAPPDATA_and_credential_path": true,
+    "credential_exists_in_normal_process": true,
+    "credential_exists_in_workbuddy_process": false,
+    "credential_content_read_or_displayed": false,
+    "inference": "宿主文件访问隔离可能导致文件不可见；尚未确认具体规则"
+  },
+  "first_compound_command_error": "sandbox-center cmd decisionRecord missing actual resource subject",
+  "single_python_command_did_execute": true,
+  "queue": {
+    "model": "Step-5-Preview",
+    "error": "429 queue.waiting.title",
+    "executed": false,
+    "cancelled": true,
+    "continued_with": "Hy3"
+  },
+  "scenario_2": {
+    "status": "pending",
+    "request": "开发假设：2026-10-25消费，总现金预算0，查权益和商品列表，先不选详情"
+  },
+  "scenario_3": {
+    "status": "pending",
+    "request": "从桌面实际返回列表选择商品，核对SKU积分及两阶段现金"
+  },
+  "core_fixes": [
+    "区分凭证不可见与尚未配置",
+    "权限和环境配置错误不显示堆栈",
+    "单条Python命令与宿主排障指令",
+    "支持显式DPAPI凭证文件；不自动回退其他凭证"
+  ],
+  "unit_tests_passed": 58,
+  "security_settings_modified": false,
+  "credential_copied": false,
+  "trades_executed": false,
+  "personal_account_data_in_this_file": false,
+  "scope_exception": "宿主在首轮无账户数据时仍写了一条工作记忆；后续明确禁止额外日志。该写入不视为满足“不写文件”。",
+  "remaining": "用户已正确允许读取；迁移后本机查询成功。待桌面控制恢复，在新任务选择Flash并使用显式新路径，完成三个真实场景。",
+  "user_reported_credential_read_allowed": true,
+  "post_permission_old_session_retest": {
+    "model": "Deepseek-V4-Pro",
+    "exit_code": 1,
+    "result": "credential_still_not_visible",
+    "no_extra_log_or_memory_write": true
+  },
+  "credential_migration": {
+    "explicitly_authorized": true,
+    "source_moved": true,
+    "ciphertext_unchanged": true,
+    "local_live_exit_code": 0,
+    "desktop_retest": "pending_control_tool_unavailable"
+  },
+  "requested_model": "deepseek-v4.1-flash",
+  "requested_model_selected_in_desktop": false
+}

@@ -108,7 +108,7 @@ class McdClient:
         return message["result"]
 
     def initialize(self):
-        result = self._rpc("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "mcd-rights-readonly", "version": "0.2.0"}})
+        result = self._rpc("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "mcd-rights-readonly", "version": "0.2.1"}})
         if not isinstance(result, dict):
             raise McdError("MCP初始化响应结构不完整。")
         self._headers["MCP-Protocol-Version"] = result.get("protocolVersion", "2024-11-05")
@@ -145,10 +145,18 @@ class McdClient:
         return content["data"]
 
 
-def _token_path():
+def _token_path(token_file=None):
     if os.name != "nt":
         raise McdError("此平台请通过MCD_MCP_TOKEN环境变量提供Token。")
-    return Path(os.environ["LOCALAPPDATA"]) / "McdRights" / "token.dpapi"
+    if token_file is not None:
+        path = Path(token_file).expanduser()
+        if not path.is_absolute():
+            raise McdError("token-file应为Windows加密凭证文件的绝对路径。")
+        return path
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if not local_app_data:
+        raise McdError("当前执行环境缺少LOCALAPPDATA，无法定位Windows凭证；请检查宿主环境配置。")
+    return Path(local_app_data) / "McdRights" / "token.dpapi"
 
 
 def _dpapi(raw, protect):
@@ -180,19 +188,26 @@ def _dpapi(raw, protect):
         kernel.LocalFree(ctypes.cast(target.data, ctypes.c_void_p))
 
 
-def save_token(token):
+def save_token(token, token_file=None):
     if not token.strip() or any(c.isspace() for c in token):
         raise McdError("Token为空或格式不正确。")
-    path = _token_path()
+    path = _token_path(token_file) if token_file is not None else _token_path()
     encrypted = _dpapi(token.encode(), True)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(encrypted)
 
 
-def load_token():
-    if os.environ.get("MCD_MCP_TOKEN"):
+def load_token(token_file=None):
+    if token_file is None and os.environ.get("MCD_MCP_TOKEN"):
         return os.environ["MCD_MCP_TOKEN"]
-    path = _token_path()
-    if not path.exists():
-        raise McdError("尚未配置Token：请先运行--set-token，或设置MCD_MCP_TOKEN。")
-    return _dpapi(path.read_bytes(), False).decode()
+    path = _token_path(token_file) if token_file is not None else _token_path()
+    try:
+        encrypted = path.read_bytes()
+    except FileNotFoundError:
+        raise McdError("当前执行环境找不到加密凭证：可能尚未配置Token，也可能被宿主文件隔离隐藏。已配置时请先核对宿主对凭证文件的读取权限，不要重复配置；首次使用请运行--set-token，或设置MCD_MCP_TOKEN。") from None
+    except OSError:
+        raise McdError("当前执行环境无法读取加密凭证，请核对宿主文件权限；未发起网络查询。") from None
+    try:
+        return _dpapi(encrypted, False).decode()
+    except UnicodeError:
+        raise McdError("加密凭证无法解码，请核对当前Windows用户和凭证配置。") from None

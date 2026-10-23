@@ -74,6 +74,7 @@ def main(argv=None):
     mode.add_argument("--demo", action="store_true", help="离线合成数据演示，无需Token")
     mode.add_argument("--live", action="store_true", help="查询本人实时权益")
     mode.add_argument("--set-token", action="store_true", help="从隐藏输入或stdin设置当前Windows用户的DPAPI加密Token")
+    parser.add_argument("--token-file", help="Windows DPAPI加密凭证文件的绝对路径；显式指定时优先于MCD_MCP_TOKEN")
     parser.add_argument("--focus", choices=["points", "coupons", "both"], default="both")
     parser.add_argument("--plan", choices=["yes", "no", "unknown"], default="unknown", help="近期是否计划消费")
     parser.add_argument("--visit-date", help="计划消费日期，YYYY-MM-DD；不填则不制造紧迫倒计时")
@@ -83,6 +84,8 @@ def main(argv=None):
     parser.add_argument("--format", choices=["markdown", "json"], default="markdown")
     parser.add_argument("--interactive", action="store_true", help="引导填写消费计划、查看权益、选择真实商品并核对完整成本")
     args = parser.parse_args(argv)
+    if args.demo and args.token_file is not None:
+        parser.error("合成演示无需凭证，请不要同时指定token-file。")
     if args.visit_date:
         try:
             date.fromisoformat(args.visit_date)
@@ -97,14 +100,14 @@ def main(argv=None):
     try:
         if args.set_token:
             token = getpass.getpass("MCP Token（不回显）：") if sys.stdin.isatty() else sys.stdin.read().strip()
-            save_token(token)
+            save_token(token, args.token_file) if args.token_file is not None else save_token(token)
             print("已保存至当前Windows用户的本机加密凭证文件，未写入技能目录。")
             return 0
         if args.interactive:
             configure_interactive(args)
         client = None
         if not args.demo:
-            client = McdClient(load_token())
+            client = McdClient(load_token(args.token_file) if args.token_file is not None else load_token())
             client.initialize()
         report = show_report(args, query_snapshot(args, client))
         if args.interactive and args.catalog:
