@@ -1,6 +1,6 @@
 {
   "date": "2026-10-23",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "status": "partial",
   "desktop_session_id": "dc973315-b583-4c08-8d6d-f208b92f72a0",
   "desktop_task_title": "查询麦麦权益真实积分",
@@ -8,7 +8,8 @@
   "models_used": [
     "Step-5-Preview",
     "Hy3",
-    "Deepseek-V4-Pro"
+    "Deepseek-V4-Pro",
+    "Deepseek-V4.1-Flash"
   ],
   "usage": null,
   "credits": null,
@@ -58,13 +59,13 @@
     "单条Python命令与宿主排障指令",
     "支持显式DPAPI凭证文件；不自动回退其他凭证"
   ],
-  "unit_tests_passed": 58,
+  "unit_tests_passed": 62,
   "security_settings_modified": false,
   "credential_copied": false,
   "trades_executed": false,
   "personal_account_data_in_this_file": false,
   "scope_exception": "宿主在首轮无账户数据时仍写了一条工作记忆；后续明确禁止额外日志。该写入不视为满足“不写文件”。",
-  "remaining": "用户已正确允许读取；迁移后本机查询成功。待桌面控制恢复，在新任务选择Flash并使用显式新路径，完成三个真实场景。",
+  "remaining": "Flash已在桌面实际使用；旧命令漏传路径导致本次失败。已补本机路径配置，等待相同命令的宿主复测。",
   "user_reported_credential_read_allowed": true,
   "post_permission_old_session_retest": {
     "model": "Deepseek-V4-Pro",
@@ -80,5 +81,29 @@
     "desktop_retest": "pending_control_tool_unavailable"
   },
   "requested_model": "deepseek-v4.1-flash",
-  "requested_model_selected_in_desktop": false
+  "requested_model_selected_in_desktop": true,
+  "post_migration_old_session_retest": {
+    "model": "deepseek-v4.1-flash",
+    "timestamp": "2026-10-23T11:06:43.751000+08:00",
+    "arguments": [
+      "--live",
+      "--focus",
+      "points",
+      "--plan",
+      "no"
+    ],
+    "token_file_argument_present": false,
+    "exit_code": 1,
+    "result": "old_default_path_still_used",
+    "migration_destination_tested": false,
+    "source": "actual desktop session tool records"
+  },
+  "local_path_config_fix": {
+    "filename": "mcd-rights.local.json",
+    "contains_token": false,
+    "packaged": false,
+    "desktop_retest": "pending",
+    "same_python_local_live_without_token_file_exit": 0,
+    "queried_at": "2026-10-23T11:12:58.263000+08:00"
+  }
 }

@@ -1,4 +1,5 @@
 import io
+import json
 import os
 import sys
 import unittest
@@ -11,6 +12,40 @@ from mcd_rights import main
 
 
 class CredentialBoundaryTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "nt", "Windows path semantics")
+    def test_old_cli_without_path_uses_persisted_migration(self):
+        chosen = str(Path.home() / "synthetic-private" / "token.dpapi")
+        with patch.dict(os.environ, {}, clear=True), patch("mcd_client.LOCAL_CONFIG_PATH") as config, patch.object(Path, "read_bytes", return_value=b"synthetic-encrypted") as read, patch("mcd_client._dpapi", return_value=b"synthetic-test-token"):
+            config.read_text.return_value = json.dumps({"token_file": chosen})
+            self.assertEqual(_token_path(), Path(chosen))
+            self.assertEqual(load_token(), "synthetic-test-token")
+            read.assert_called_once()
+
+    @unittest.skipUnless(os.name == "nt", "Windows path semantics")
+    def test_unreadable_local_config_fails_before_network_without_fallback(self):
+        with patch.dict(os.environ, {}, clear=True), patch("mcd_client.LOCAL_CONFIG_PATH") as config, patch("mcd_rights.McdClient") as client, patch("sys.stderr", new_callable=io.StringIO) as err:
+            config.read_text.side_effect = PermissionError("private detail")
+            self.assertEqual(main(["--live", "--focus", "points", "--plan", "no"]), 1)
+            client.assert_not_called()
+            self.assertIn("不会回退", err.getvalue())
+            self.assertNotIn("private detail", err.getvalue())
+
+    @unittest.skipUnless(os.name == "nt", "Windows path semantics")
+    def test_invalid_local_configs_do_not_fall_back(self):
+        with patch("mcd_client.LOCAL_CONFIG_PATH") as config:
+            for value in ["{broken", "null", "[]", "{}", '{"token_file": ""}', '{"token_file": "relative/token.dpapi"}', '{"token_file": 1}', '{"token_file": "C:/private/token.dpapi", "token": "synthetic"}']:
+                with self.subTest(value=value):
+                    config.read_text.return_value = value
+                    with self.assertRaises(McdError):
+                        _token_path()
+
+    @unittest.skipUnless(os.name == "nt", "Windows path semantics")
+    def test_explicit_path_ignores_local_config(self):
+        chosen = str(Path.home() / "synthetic-private" / "token.dpapi")
+        with patch("mcd_client.LOCAL_CONFIG_PATH") as config:
+            self.assertEqual(_token_path(chosen), Path(chosen))
+            config.read_text.assert_not_called()
+
     def test_explicit_encrypted_file_overrides_environment_token(self):
         with patch.dict(os.environ, {"MCD_MCP_TOKEN": "wrong-synthetic-token"}), patch("mcd_client._token_path") as path, patch("mcd_client._dpapi", return_value=b"synthetic-test-token") as decrypt:
             path.return_value.read_bytes.return_value = b"synthetic-encrypted-bytes"

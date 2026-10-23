@@ -6,3 +6,4 @@ __pycache__/
 *.dpapi
 private/
 reports/
+mcd-rights.local.json

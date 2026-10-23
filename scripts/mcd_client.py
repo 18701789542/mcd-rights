@@ -9,6 +9,7 @@ import urllib.request
 from pathlib import Path
 
 ENDPOINT = "https://mcp.mcd.cn"
+LOCAL_CONFIG_PATH = Path(__file__).resolve().parent.parent / "mcd-rights.local.json"
 ALLOWED_TOOLS = frozenset({"now-time-info", "query-my-account", "query-my-coupons", "mall-points-products", "mall-product-detail"})
 ARGUMENTS = {
     "now-time-info": set(), "query-my-account": set(),
@@ -108,7 +109,7 @@ class McdClient:
         return message["result"]
 
     def initialize(self):
-        result = self._rpc("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "mcd-rights-readonly", "version": "0.2.1"}})
+        result = self._rpc("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "mcd-rights-readonly", "version": "0.2.2"}})
         if not isinstance(result, dict):
             raise McdError("MCP初始化响应结构不完整。")
         self._headers["MCP-Protocol-Version"] = result.get("protocolVersion", "2024-11-05")
@@ -148,6 +149,18 @@ class McdClient:
 def _token_path(token_file=None):
     if os.name != "nt":
         raise McdError("此平台请通过MCD_MCP_TOKEN环境变量提供Token。")
+    if token_file is None:
+        missing = object()
+        try:
+            config = json.loads(LOCAL_CONFIG_PATH.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            config = missing
+        except (OSError, ValueError):
+            raise McdError("无法读取本机路径配置mcd-rights.local.json；请检查配置，不会回退旧凭证位置。") from None
+        if config is not missing:
+            if not isinstance(config, dict) or set(config) != {"token_file"} or not isinstance(config["token_file"], str) or not config["token_file"].strip():
+                raise McdError("本机路径配置应只包含非空字符串token_file，不会回退旧凭证位置。")
+            token_file = config["token_file"]
     if token_file is not None:
         path = Path(token_file).expanduser()
         if not path.is_absolute():
